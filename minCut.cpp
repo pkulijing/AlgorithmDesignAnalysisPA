@@ -35,12 +35,24 @@ public:
 	int numEdges() const { return m_NumEdges; }
 	list<list<int> >::iterator adjs(int i) { 
 		auto it = m_Adjs.begin();
-		advance(it, i - 1);
+		int j = 0;
+		for(auto itv = m_Vertices.begin(); itv != m_Vertices.end(); ++itv) {
+			if(*itv != i)
+				++j;
+			else break;
+		}
+		advance(it, j);
 		return it;
 	}	
 	list<list<int> >::const_iterator adjs(int i) const{ 
 		auto it = m_Adjs.begin();
-		advance(it, i - 1);
+		int j = 0;
+		for(auto itv = m_Vertices.begin(); itv != m_Vertices.end(); ++itv) {
+			if(*itv != i)
+				++j;
+			else break;
+		}
+		advance(it, j);
 		return it;
 	}
 	void output(ostream& os) const {
@@ -60,16 +72,16 @@ public:
 		}
 	}
 	pair<int,int> randomEdge() const {
-		srand(time(NULL));
 		int iEdge = rand() % numEdges();
-		for(int i = 1; i <= numVertices(); ++i) {
+		for(auto it = m_Vertices.begin(); it != m_Vertices.end(); ++it) {
+			int i = *it;
 			if(iEdge >= adjs(i)->size()) {
 				iEdge -= adjs(i)->size();
 				continue;
 			}
-			auto it = adjs(i)->begin();
-			advance(it, iEdge);
-			return make_pair(i, *it);
+			auto iti = adjs(i)->begin();
+			advance(iti, iEdge);
+			return make_pair(i, *iti);
 		}
 	}
 	void merge(int i, int j) {
@@ -86,8 +98,6 @@ public:
 			else
 				++itj;
 		}
-		cout << "step1\n";
-		output(cout);
 		//for each of i's adjacencies, check if it's j
 		for(auto iti = adjsi->begin(); iti != adjsi->end(); ++iti) {
 			if(*iti == j) {
@@ -104,15 +114,12 @@ public:
 				}
 			}
 		}
-		cout << "step2\n";
-		output(cout);
 		auto itv = m_Vertices.begin();
-		advance(itv, i - 1);
+		while(*itv != i)
+			itv++;
 		m_Vertices.erase(itv);
 		m_NumEdges -= numSelfLoop;
 		m_Adjs.erase(adjsi);
-		cout << "step3\n";
-		output(cout);
 	}
 private:
 	int m_NumEdges;
@@ -159,14 +166,14 @@ private:
 	Cut randomContract() const {
 		Graph g = m_Graph;
 		Cut res;
-		vector<pair<int,int> > ps = {make_pair(3,1), make_pair(2,4), make_pair(1,4)};
+		vector<pair<int,int> > ps = {make_pair(3,2), make_pair(4,2)};
 		int i = 0;
 		while(g.numVertices() > 2) {
 			auto edge = g.randomEdge();
-			edge = ps[i++];
-			cout << "edge = " << edge.first << "-" << edge.second << endl; 
+			//auto edge = ps[i++];
+			// cout << "edge = " << edge.first << "-" << edge.second << endl; 
 			g.merge(edge.first, edge.second);
-			cout << g << endl;
+			// cout << g << endl;
 		}
 		assert(g.numEdges() % 2 == 0);
 		res.numCrossingEdges = g.numEdges() / 2;
@@ -177,10 +184,11 @@ private:
 
 
 int main(int argc, char** argv) {
+	srand(time(NULL));
 	ifstream ifs(argv[1]);
 	Graph graph(ifs);
 	cout << graph << endl;
 	MinCut minCut(graph);
-	cout << minCut.computeMinCut(1) << endl;
+	cout << minCut.computeMinCut(60) << endl;
 	return 0;
 }
