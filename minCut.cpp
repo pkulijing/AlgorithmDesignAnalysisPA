@@ -9,16 +9,44 @@
 #include <fstream>
 #include <sstream>
 #include <iterator>
+#include <set>
 using namespace std;
 class Graph;
 class MinCut;
-class UnionFind;
 struct Cut;
+class UnionFind;
+class UnionFind {
+public:
+	UnionFind(int n) : count(n), parent(vector<int>(n)) {
+		for(int i = 0; i < n; i++) {
+			parent[i] = i;
+		}
+	}
+	bool connected(int i, int j) {
+		return find(i) == find(j);
+	}
+	void unite(int i, int j) {
+		int rooti = find(i);
+		int rootj = find(j);
+		if(rootj == rooti) return;
+		parent[rooti] = parent[rootj];
+	}
+	int find(int i) {
+		while(i != parent[i])
+			i = parent[i];
+		return i;
+	}
+private:
+	vector<int> parent;
+	int count;
+};
 class Graph {
 public:
 	Graph(istream& is) : m_NumEdges(0) {
 		string line;
 		while(getline(is, line)) {
+			if(line.length() == 0)
+				continue;
 			istringstream iss(line);
 			list<int> adjs;
 			int tmp;
@@ -83,6 +111,8 @@ public:
 			advance(iti, iEdge);
 			return make_pair(i, *iti);
 		}
+		//cannot reach here
+		return make_pair(-1,-1);
 	}
 	void merge(int i, int j) {
 		auto adjsi = adjs(i);
@@ -134,6 +164,7 @@ struct Cut {
 	int numCrossingEdges;
 	vector<int> left;
 	vector<int> right;
+	vector<pair<int, int> > edges;
 };
 ostream& operator<<(ostream& os, const Cut& cut) {
 	os << "number of crossing edges: " << cut.numCrossingEdges << endl;
@@ -145,6 +176,11 @@ ostream& operator<<(ostream& os, const Cut& cut) {
 	for(auto it = cut.right.begin(); it != cut.right.end(); ++it)
 		os << *it << " ";
 	os << endl;
+	os << "Crossing edges: " << endl;
+	for(auto it = cut.edges.begin(); it != cut.edges.end(); ++it) {
+		os << "(" << it->first << ", " << it->second << ")";
+	}	
+	os << endl;
 	return os;
 }
 class MinCut {
@@ -152,7 +188,8 @@ public:
 	MinCut(const Graph& G):m_Graph(G) {}
 	Cut computeMinCut(int numIt) {
 		cout << "Start ..." << endl;
-		Cut best = randomContract();
+		Cut best;
+		best.numCrossingEdges = m_Graph.numEdges();
 		for(int i = 0; i < numIt; ++i) {
 			cout << "Iterator = " << i << ".";
 			Cut res = randomContract();
@@ -166,17 +203,38 @@ private:
 	Cut randomContract() const {
 		Graph g = m_Graph;
 		Cut res;
-		vector<pair<int,int> > ps = {make_pair(3,2), make_pair(4,2)};
-		int i = 0;
+		UnionFind uf(m_Graph.numVertices());
 		while(g.numVertices() > 2) {
 			auto edge = g.randomEdge();
-			//auto edge = ps[i++];
-			// cout << "edge = " << edge.first << "-" << edge.second << endl; 
 			g.merge(edge.first, edge.second);
-			// cout << g << endl;
+			uf.unite(edge.first - 1, edge.second - 1);
 		}
 		assert(g.numEdges() % 2 == 0);
 		res.numCrossingEdges = g.numEdges() / 2;
+
+		int root1 = uf.find(0), root2 = -1;
+		res.left.push_back(1);
+		for(int i = 1; i < m_Graph.numVertices(); i++) {
+			int root = uf.find(i);
+			if(root != root1) {
+				if(root2 != -1)
+					assert(root2 == root);
+				else 
+					root2 = root;
+				res.right.push_back(i + 1);
+			} else {
+				res.left.push_back(i + 1);
+			}
+		}
+		for(auto it = res.left.begin(); it != res.left.end(); ++it) {
+			auto adjs = m_Graph.adjs(*it);
+			for(auto it1 = adjs->begin(); it1 != adjs->end(); ++it1) {
+				if(find(res.right.begin(), res.right.end(), *it1) != res.right.end()) {
+					res.edges.push_back(make_pair(*it, *it1));
+				}
+			}
+
+		}
 		return res;
 	}
 	const Graph& m_Graph;
