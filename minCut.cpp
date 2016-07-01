@@ -9,7 +9,7 @@
 #include <fstream>
 #include <sstream>
 #include <iterator>
-#include <set>
+#include <algorithm>
 using namespace std;
 class Graph;
 class MinCut;
@@ -190,13 +190,18 @@ public:
 		cout << "Start ..." << endl;
 		Cut best;
 		best.numCrossingEdges = m_Graph.numEdges();
+		int success = 1;
 		for(int i = 0; i < numIt; ++i) {
-			cout << "Iterator = " << i << ".";
 			Cut res = randomContract();
-			if(res.numCrossingEdges < best.numCrossingEdges)
+			if(res.numCrossingEdges < best.numCrossingEdges) {
 				best = res;
+				success = 1;
+			} else if(res.numCrossingEdges == best.numCrossingEdges) {
+				success++;
+			}
 			cout << "Iterator = " << i << ", res = " << res.numCrossingEdges << ", best = " << best.numCrossingEdges << endl;
 		}
+		cout << "Best case appeared " << success << "times, success rate = " << (double)success / numIt << endl;
 		return best;
 	} 
 private:
@@ -245,8 +250,11 @@ int main(int argc, char** argv) {
 	srand(time(NULL));
 	ifstream ifs(argv[1]);
 	Graph graph(ifs);
-	cout << graph << endl;
+	// cout << graph << endl;
+	int numIt;
+	istringstream iss(argv[2]);
+	iss >> numIt;
 	MinCut minCut(graph);
-	cout << minCut.computeMinCut(60) << endl;
+	cout << minCut.computeMinCut(numIt) << endl;
 	return 0;
 }
