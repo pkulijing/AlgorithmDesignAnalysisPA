@@ -4,6 +4,7 @@
 #include <sstream>
 #include <cstdlib>
 #include <ctime>
+#include <cassert>
 const int MAX_INDEX = 875714;
 using std::vector;
 using std::istream;
@@ -13,6 +14,23 @@ using std::endl;
 class DirectedGraph;
 class SCC;
 class QuickSort;
+template <typename T>
+class Stack {
+public:
+	Stack() {}
+	void push(const T& t) { _content.push_back(t); }
+	T pop() { 
+		assert(_content.size() > 0);
+		T val = _content.back();
+		_content.resize(_content.size() - 1);
+		return val;
+	}
+	T top() const { return _content.top(); }
+	bool empty() const { return _content.empty(); }
+	size_t size() const { return _content.size(); }
+private:
+	vector<T> _content;
+};
 class QuickSort {
 public:
 	static void sort(vector<int>& nums) {
@@ -98,54 +116,81 @@ public:
 	}
 
 	void DFSLoop1() {
-		vector<int> explored(m_G.numVertices() + 1);
-		for(int i = 1; i <= m_G.numVertices(); i++)
-			explored[i] = 0;
+		vector<bool> explored(m_G.numVertices() + 1);
+		vector<bool> onStack(m_G.numVertices() + 1);
+		vector<int> parent(m_G.numVertices() + 1);
+		Stack<int> vertices;
 		int finishTime = 0;
-		int recurlevel = 1;
-		int max_recur = 1;
 		for(int i = m_G.numVertices(); i >= 1; i--) {
 			if(!explored[i]) {
-				DFS1(i, explored, finishTime, recurlevel, max_recur);
+				vertices.push(i);
+				while(!vertices.empty()) {
+					int v = vertices.pop();
+					// cout << "popped " << v << " from stack. size = " << vertices.size() << endl;
+		 			explored[v] = true;
+					const vector<int>& inEdges = m_G.getInEdgesOf(v);
+					bool parentdef = false;
+					bool noson = true;
+					for(auto it = inEdges.begin(); it != inEdges.end(); ++it) {
+						if(!explored[*it] && !onStack[*it]) {
+							noson = false;
+							onStack[*it] = true;
+							vertices.push(*it);
+							// cout << "--pushed " << *it << " on stack when processing " << v 
+							// 	<< ". size = " << vertices.size() << endl;
+							if(!parentdef) {
+								parentdef = true;
+								parent[*it] = v;
+							}
+						}
+					}
+					if(noson) {
+						m_OrderIn2ndLoop[++finishTime] = v;
+						cout << "--v = " << v << ", m_OrderIn2ndLoop[" << finishTime << "] = " << v << endl;
+						while(parent[v]) {
+							m_OrderIn2ndLoop[++finishTime] = parent[v];
+							cout << "--parent[" << v << "] = " << parent[v] << ", m_OrderIn2ndLoop[" << finishTime << "] = " << parent[v] << endl;
+							v = parent[v];
+						}		
+					}
+				}		
 			}
 		}
+		// for(int i = 1; i <= m_G.numVertices(); i++) {
+		// 	cout << "parent[" << i << "] = " << parent[i] << endl;
+		// }
+		// for(int i = 1; i <= m_G.numVertices(); i++) {
+		// 	cout << "m_OrderIn2ndLoop[" << i << "] = " << m_OrderIn2ndLoop[i] << endl;
+		// }
 	}
-	void DFS1(int i, vector<int>& explored, int& finishTime, int recurlevel, int& max_recur) {
-		int step = 1;
-		max_recur = max_recur > recurlevel ? max_recur : recurlevel;
-		cout << recurlevel << " level. max_recur = " << max_recur << endl;
-		explored[i] = 1;
-		const vector<int>& inEdges = m_G.getInEdgesOf(i);
-		for(auto it = inEdges.begin(); it != inEdges.end(); ++it) {
-			if(!explored[*it]) {
-				DFS1(*it, explored, finishTime, recurlevel + 1, max_recur);
-			}
-		}
-		m_OrderIn2ndLoop[++finishTime] = i;
-	}
+		
 	void DFSLoop2() {
-		vector<int> explored(m_G.numVertices() + 1);
-		for(int i = 1; i <= m_G.numVertices(); i++)
-			explored[i] = 0;
+		vector<bool> explored(m_G.numVertices() + 1);
+		vector<bool> onStack(m_G.numVertices() + 1);
+		Stack<int> vertices;
+
 		for(int i = m_G.numVertices(); i >= 1; --i) {
 			if(!explored[m_OrderIn2ndLoop[i]]) {
 				m_SCCs.push_back(vector<int>());
 				m_SCCSizes.push_back(0);
-				DFS2(m_OrderIn2ndLoop[i], explored, m_OrderIn2ndLoop[i]);
+				vertices.push(m_OrderIn2ndLoop[i]);
+				while(!vertices.empty()) {
+					int v = vertices.pop();
+					explored[v] = true;
+					m_SCCs.back().push_back(v);
+					m_SCCSizes.back()++;
+					const vector<int>& outEdges = m_G.getOutEdgesOf(v);
+					for(auto it = outEdges.begin(); it != outEdges.end(); ++it) {
+						if(!explored[*it] && !onStack[*it]) {
+							onStack[*it] = true;
+							vertices.push(*it);
+						}
+					}
+				}
 			}
 		}
 	}
-	void DFS2(int i, vector<int>& explored, int leader) {
-		explored[i] = 1;
-		m_SCCs.back().push_back(i);
-		m_SCCSizes.back()++;
-		const vector<int>& outEdges = m_G.getOutEdgesOf(i);
-		for(auto it = outEdges.begin(); it != outEdges.end(); ++it) {
-			if(!explored[*it]) {
-				DFS2(*it, explored, leader);
-			}
-		}
-	}
+
 	void printSCCs(ostream& os) const {
 		for(auto it = m_SCCs.begin(); it != m_SCCs.end(); ++it) {
 			for(auto it1 = it->begin(); it1 != it->end(); ++it1) {
@@ -155,6 +200,7 @@ public:
 		}
 	}
 	void printSizes(ostream& os, int num) {
+		os << m_SCCSizes.size() << " SCCs have been found. Largest " << num << " have sizes: \n"; 
 		QuickSort::sort(m_SCCSizes);
 		for(int i = 0; i < num; i++) {
 			int index = m_SCCSizes.size() - 1 - i;
@@ -175,6 +221,7 @@ int main(int argc, char** argv) {
 	DirectedGraph g(ifs, max_size);
 	g.print(cout);
 	SCC scc(g);
+	//scc.printSCCs(cout);
 	scc.printSizes(cout, 5);
 	return 0;
 }
