@@ -4,7 +4,9 @@
 #include <sstream>
 #include <cstdlib>
 #include <ctime>
+#include <algorithm>
 const int MAX_INDEX = 875714;
+bool debug;
 using std::vector;
 using std::istream;
 using std::ostream;
@@ -65,15 +67,21 @@ public:
 	const vector<int>& getOutEdgesOf(int i) const { return edgeOut[i]; }
 	const vector<int>& getInEdgesOf(int i) const { return edgeIn[i]; }
 
-	void print(ostream& os, bool printEdges = false) const {
+	void print(ostream& os, bool printEdges = false, bool printInv = false) const {
 		os << "number of vertices: " << numVertices() 
 		   << "\nnumber of edges: " << numEdges() << endl;
 		if(printEdges) {
 			os << "Edges:\n";
 			for(int i = 1; i <= numVertices(); ++i) {
 				os << i << ":";
-				for(auto it = edgeOut[i].begin(); it != edgeOut[i].end(); ++it) {
-					os << " " << *it;
+				if(printInv) {
+					for(auto it = edgeIn[i].begin(); it != edgeIn[i].end(); ++it) {
+						os << " " << *it;
+					}
+				} else {
+					for(auto it = edgeOut[i].begin(); it != edgeOut[i].end(); ++it) {
+						os << " " << *it;
+					}
 				}
 				os << endl;
 			}
@@ -98,53 +106,50 @@ public:
 	}
 
 	void DFSLoop1() {
-		vector<int> explored(m_G.numVertices() + 1);
-		for(int i = 1; i <= m_G.numVertices(); i++)
-			explored[i] = 0;
+		vector<bool> explored(m_G.numVertices() + 1);
 		int finishTime = 0;
-		int recurlevel = 1;
-		int max_recur = 1;
 		for(int i = m_G.numVertices(); i >= 1; i--) {
 			if(!explored[i]) {
-				DFS1(i, explored, finishTime, recurlevel, max_recur);
+				DFS1(i, explored, finishTime);
 			}
 		}
-		for(int i = 1; i <= m_G.numVertices(); i++) {
-			cout << "m_OrderIn2ndLoop[" << i << "] = " << m_OrderIn2ndLoop[i] << endl;
+		if(debug) {
+			for(int i = 1; i <= m_G.numVertices(); i++) {
+				cout << "m_OrderIn2ndLoop[" << i << "] = " << m_OrderIn2ndLoop[i] << endl;
+			}
 		}
 	}
-	void DFS1(int i, vector<int>& explored, int& finishTime, int recurlevel, int& max_recur) {
-		max_recur = max_recur > recurlevel ? max_recur : recurlevel;
-		//cout << recurlevel << " level. max_recur = " << max_recur << endl;
-		explored[i] = 1;
+	void DFS1(int i, vector<bool>& explored, int& finishTime) {
+		if(debug) 
+			cout << "dealing with " << i << endl;
+		explored[i] = true;
 		const vector<int>& inEdges = m_G.getInEdgesOf(i);
-		for(auto it = inEdges.begin(); it != inEdges.end(); ++it) {
+		//use reverse iterator here to obtain same result as non recursion version
+		for(auto it = inEdges.rbegin(); it != inEdges.rend(); ++it) {
 			if(!explored[*it]) {
-				DFS1(*it, explored, finishTime, recurlevel + 1, max_recur);
+				DFS1(*it, explored, finishTime);
 			}
 		}
 		m_OrderIn2ndLoop[++finishTime] = i;
 	}
 	void DFSLoop2() {
-		vector<int> explored(m_G.numVertices() + 1);
-		for(int i = 1; i <= m_G.numVertices(); i++)
-			explored[i] = 0;
+		vector<bool> explored(m_G.numVertices() + 1);
 		for(int i = m_G.numVertices(); i >= 1; --i) {
 			if(!explored[m_OrderIn2ndLoop[i]]) {
 				m_SCCs.push_back(vector<int>());
 				m_SCCSizes.push_back(0);
-				DFS2(m_OrderIn2ndLoop[i], explored, m_OrderIn2ndLoop[i]);
+				DFS2(m_OrderIn2ndLoop[i], explored);
 			}
 		}
 	}
-	void DFS2(int i, vector<int>& explored, int leader) {
-		explored[i] = 1;
+	void DFS2(int i, vector<bool>& explored) {
+		explored[i] = true;
 		m_SCCs.back().push_back(i);
 		m_SCCSizes.back()++;
 		const vector<int>& outEdges = m_G.getOutEdgesOf(i);
 		for(auto it = outEdges.begin(); it != outEdges.end(); ++it) {
 			if(!explored[*it]) {
-				DFS2(*it, explored, leader);
+				DFS2(*it, explored);
 			}
 		}
 	}
@@ -158,7 +163,9 @@ public:
 	}
 	void printSizes(ostream& os, int num) {
 		os << m_SCCSizes.size() << " SCCs have been found. Largest " << num << " have sizes: \n"; 
-		QuickSort::sort(m_SCCSizes);
+		//The implementation of quick sort is correct but too slow when compared with the STL version.
+		//QuickSort::sort(m_SCCSizes);
+		std::sort(m_SCCSizes.begin(), m_SCCSizes.end());
 		for(int i = 0; i < num; i++) {
 			int index = m_SCCSizes.size() - 1 - i;
 			os << (index >= 0 ? m_SCCSizes[index] : 0) << (i == num - 1 ? "\n" : ",");
@@ -175,10 +182,12 @@ int main(int argc, char** argv) {
 	std::srand(time(NULL));
 	std::ifstream ifs(argv[1]);
 	int max_size = argc > 2 ? std::atoi(argv[2]) : MAX_INDEX;
+	debug = argc > 3 ? true : false;
 	DirectedGraph g(ifs, max_size);
 	g.print(cout);
 	SCC scc(g);
-	//scc.printSCCs(cout);
+	if(debug) 
+		scc.printSCCs(cout);
 	scc.printSizes(cout, 5);
 	return 0;
 }
