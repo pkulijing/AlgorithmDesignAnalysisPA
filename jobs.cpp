@@ -105,8 +105,8 @@ int main(int argc, char** argv) {
 		jobs.push_back(Job(w, l));
 	}
 	vector<Job> jobsRatio = jobs, jobsDiff = jobs;
-	QuickSort<Job> qsRatio(Job::compRatio);
-	QuickSort<Job> qsDiff(Job::compDiff);
+	QuickSort<Job> qsRatio(&Job::compRatio);
+	QuickSort<Job> qsDiff(&Job::compDiff);
 	qsRatio.sort(jobsRatio);
 	cout << "ratio:\n";
 	for(auto it = jobsRatio.begin(); it != jobsRatio.end(); ++it) {
