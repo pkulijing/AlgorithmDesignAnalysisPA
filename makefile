@@ -10,3 +10,5 @@ dijkstra: dijkstra.cpp
 	g++ --std=c++11 -o bin/dijkstra dijkstra.cpp
 median: median.cpp
 	g++ --std=c++11 -o bin/median median.cpp
+jobs: jobs.cpp
+	g++ --std=c++11 -o bin/jobs jobs.cpp
