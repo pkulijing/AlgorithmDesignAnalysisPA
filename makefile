@@ -17,3 +17,8 @@ jobs: jobs.cpp
 	$(CC) $(OPT) -o $(BINDIR)/jobs jobs.cpp
 prim: prim.cpp
 	$(CC) $(OPT) -o $(BINDIR)/prim prim.cpp
+clustering: clustering.cpp
+	$(CC) $(OPT) -o $(BINDIR)/clustering clustering.cpp
+bigclustering: bigclustering.cpp
+	$(CC) $(OPT) -o $(BINDIR)/bigclustering bigclustering.cpp
+
