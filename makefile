@@ -25,4 +25,6 @@ knapsack: knapsack.cpp
 	$(CC) $(OPT) -o $(BINDIR)/knapsack knapsack.cpp
 knapsack_big: knapsack_big.cpp
 	$(CC) $(OPT) -o $(BINDIR)/knapsack_big knapsack_big.cpp
-	
+optimalBST: optimalBST.cpp
+	$(CC) $(OPT) -o $(BINDIR)/optimalBST optimalBST.cpp
+
