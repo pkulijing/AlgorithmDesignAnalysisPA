@@ -21,4 +21,8 @@ clustering: clustering.cpp
 	$(CC) $(OPT) -o $(BINDIR)/clustering clustering.cpp
 bigclustering: bigclustering.cpp
 	$(CC) $(OPT) -o $(BINDIR)/bigclustering bigclustering.cpp
-
+knapsack: knapsack.cpp
+	$(CC) $(OPT) -o $(BINDIR)/knapsack knapsack.cpp
+knapsack_big: knapsack_big.cpp
+	$(CC) $(OPT) -o $(BINDIR)/knapsack_big knapsack_big.cpp
+	

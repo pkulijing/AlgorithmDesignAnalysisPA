@@ -4,3 +4,5 @@ scc.test
 twosum.test
 bigclustering.test
 clustering.test
+knapsack_big.test
+
