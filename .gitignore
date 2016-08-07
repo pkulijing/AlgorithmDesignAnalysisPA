@@ -5,4 +5,7 @@ twosum.test
 bigclustering.test
 clustering.test
 knapsack_big.test
+apsp20000.test
+apsp1000*.test
+
 
