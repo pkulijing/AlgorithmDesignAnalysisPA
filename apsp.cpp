@@ -212,16 +212,23 @@ public:
 	 	_prev(g.numNodes() + 1, INVALID),
 	 	_negativeCycle(false) {
 	 	_lengths[_source] = 0;
+	 	vector<future<void> > futures;
  		for(int i = 1; i < _numNodes; i++) {
- 			for(int j = 1; j <= _numNodes; j++) {
- 				const vector<Edge>& edges = g.edgesTo(j);
- 				for(auto it = edges.begin(); it != edges.end(); ++it) {
- 					if(_lengths[it->tail] != INT_MAX && _lengths[it->tail] + it->length < _lengths[j]) {
- 						_lengths[j] = _lengths[it->tail] + it->length;
- 						_prev[j] = it->tail;
- 					}
- 				}
- 			}
+ 			futures.push_back(async(
+ 				[&]() mutable {
+					for(int j = 1; j <= _numNodes; j++) {
+	 					const vector<Edge>& edges = g.edgesTo(j);
+		 				for(auto it = edges.begin(); it != edges.end(); ++it) {
+		 					if(_lengths[it->tail] != INT_MAX && _lengths[it->tail] + it->length < _lengths[j]) {
+		 						_lengths[j] = _lengths[it->tail] + it->length;
+		 						_prev[j] = it->tail;
+		 					}
+						}
+					}
+				}));
+ 		}
+ 		for(auto& f : futures) {
+ 			f.get();
  		}
 
  		for(int j = 1; j <= _numNodes; j++) {
@@ -317,6 +324,7 @@ public:
 		if(bf.hasNegativeCycle()) {
 			_negativeCycle = true;
 		} else {
+			cout << "Does not have negative cycle. Will continue to run ..." << endl;
 			Graph g1(_numNodes);
 			for(auto it = g.edges().begin(); it != g.edges().end(); ++it) {
 				g1.addEdge(it->tail, it->head, it->length + bf.lengthTo(it->tail) - bf.lengthTo(it->head));
