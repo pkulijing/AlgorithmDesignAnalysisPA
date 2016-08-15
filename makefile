@@ -29,5 +29,8 @@ optimalBST: optimalBST.cpp
 	$(CC) $(OPT) -o $(BINDIR)/optimalBST optimalBST.cpp
 apsp: apsp.cpp
 	$(CC) $(OPT) -o $(BINDIR)/apsp apsp.cpp
+tsp: tsp.cpp
+	$(CC) $(OPT) -o $(BINDIR)/tsp tsp.cpp
+
 
 
