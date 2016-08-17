@@ -19,14 +19,7 @@ using std::pair;
 using std::ostream;
 using std::istream;
 using std::bitset;
-const int N = 32;
-static int power(int a, int n) {
-	int res = 1;
-	for(int i = 0; i < n; i++) {
-		res *= a;
-	}
-	return res;
-}
+const int N = 25;
 class TSP {
 public:
 	TSP(const vector<float>& x, const vector<float>& y) 
@@ -67,30 +60,39 @@ public:
 		threshold += _distance[cur][0];
 		cout << threshold << endl;
 		unordered_map<int, vector<float> > minLens;
-		vector<float> lens1(n, threshold + 1);
+		vector<float> lens1(n - 1, threshold + 1);
 		lens1[0] = 0;
-		minLens[1] = lens1;
+		minLens[0] = lens1;
 		for(int i = 2; i <= n; i++) {
 			unordered_map<int, vector<float> > newMinLens;
 			newMinLens.reserve(_nChooseK[i - 1]);
 			for(auto it = minLens.begin(); it != minLens.end(); it++) {
 				int num = it->first;
 				bitset<N> bs(num);
-				for(int j = 1; j < n; j++){
+				for(int j = 0; j < n - 1; j++){
 					if(!bs[j]) {
 						bitset<N> bs1 = bs;
 						bs1.set(j);
 						int num1 = bs1.to_ulong();
-						if(newMinLens.find(num1) == newMinLens.end()) {
-							newMinLens[num1] = vector<float>(n, threshold + 1);
+						if(i == 2) {
+							vector<float> t(n - 1, threshold + 1);
+							t[j] = _distance[0][j + 1];
+							newMinLens[num1] = t;
+							continue;
 						}
 						float val = threshold + 1;
-						for(int k = 0; k < n; k++) {
+						for(int k = 0; k < n - 1; k++) {
 							if(k == j)
 								continue;
-							val = min(val, it->second[k] + _distance[k][j]);
+							val = min(val, it->second[k] + _distance[k + 1][j + 1]);
+						}
+						auto itFind = newMinLens.find(num1);
+						if(itFind == newMinLens.end()) {
+							auto itInsert = newMinLens.emplace(num1, vector<float>(n - 1, threshold + 1));
+							itInsert.first->second[j] = val;
+						} else {
+							itFind->second[j] = val;				
 						}	
-						newMinLens[num1][j] = val;					
 					}
 				}
 			}
@@ -100,9 +102,9 @@ public:
 		assert(minLens.size() == 1);
 		_minLen = threshold + 1;
 		auto it = minLens.begin();
-		for(int k = 1; k < n; k++) {
+		for(int k = 0; k < n - 1; k++) {
 			cout << _minLen << endl;
-			_minLen = min(_minLen, it->second[k] + _distance[k][0]);
+			_minLen = min(_minLen, it->second[k] + _distance[k + 1][0]);
 		}
 	}
 	float result() const { return _minLen; }
