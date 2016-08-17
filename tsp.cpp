@@ -7,11 +7,9 @@
 #include <cassert>
 #include <climits>
 #include <unordered_map>
-#include <unordered_set>
 #include <chrono>
 #include <bitset>
 #include <algorithm>
-using std::unordered_set;
 using std::unordered_map;
 using std::ifstream;
 using std::cout;
