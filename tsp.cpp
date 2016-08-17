@@ -71,18 +71,16 @@ public:
 						bitset<N> bs1 = bs;
 						bs1.set(j);
 						int num1 = bs1.to_ulong();
+						if(newMinLens.find(num1) == newMinLens.end()) {
+							newMinLens[num1] = vector<float>(n, threshold + 1);
+						}
 						float val = threshold + 1;
 						for(int k = 0; k < n; k++) {
-							if(k == j)
+							if(k == j || it->second[k] > threshold)
 								continue;
 							val = min(val, it->second[k] + _distance[k][j]);
-						}
-						if(val < threshold) {
-							if(newMinLens.find(num1) == newMinLens.end()) {
-								newMinLens[num1] = vector<float>(n, threshold + 1);
-							}	
-							newMinLens[num1][j] = val;					
-						}
+						}	
+						newMinLens[num1][j] = val;					
 					}
 				}
 			}
