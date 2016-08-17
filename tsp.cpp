@@ -9,7 +9,7 @@
 #include <unordered_map>
 #include <chrono>
 #include <bitset>
-#include <algorithm>
+#include <cfloat>
 using std::unordered_map;
 using std::ifstream;
 using std::cout;
@@ -46,10 +46,25 @@ public:
 				_distance[i][j] = _distance[j][i];
 			}
 		}
-		float threshold = _distance[n - 1][0];
-		for(int i = 0; i < n - 1; i++) {
-			threshold += _distance[i][i + 1];
+		//A greedy solution
+		vector<bool> used(n, false);
+		used[0] = true;
+		int cur = 0;
+		float threshold = 0;
+		for(int i = 1; i < n; i++) {
+			float min = FLT_MAX;
+			int choice = -1;
+			for(int j = 1; j < n; j++) {
+				if(!used[j] && _distance[j][cur] < min) {
+					min = _distance[j][cur];
+					choice = j;
+				}
+			}
+			cur = choice;
+			used[choice] = true;
+			threshold += min;
 		}
+		threshold += _distance[cur][0];
 		cout << threshold << endl;
 		unordered_map<int, vector<float> > minLens;
 		vector<float> lens1(n, threshold + 1);
@@ -59,9 +74,6 @@ public:
 			unordered_map<int, vector<float> > newMinLens;
 			newMinLens.reserve(_nChooseK[i - 1]);
 			for(auto it = minLens.begin(); it != minLens.end(); it++) {
-				auto minIt = std::min_element(it->second.begin(), it->second.end());
-				if(*minIt > threshold)
-					continue;
 				int num = it->first;
 				bitset<N> bs(num);
 				for(int j = 1; j < n; j++){
@@ -74,7 +86,7 @@ public:
 						}
 						float val = threshold + 1;
 						for(int k = 0; k < n; k++) {
-							if(k == j || it->second[k] > threshold)
+							if(k == j)
 								continue;
 							val = min(val, it->second[k] + _distance[k][j]);
 						}	
