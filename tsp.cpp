@@ -69,7 +69,7 @@ public:
 		unordered_map<int, vector<float> > minLens;
 		vector<float> lens1(n, threshold + 1);
 		lens1[0] = 0;
-		minLens[0] = lens1;
+		minLens[1] = lens1;
 		for(int i = 2; i <= n; i++) {
 			unordered_map<int, vector<float> > newMinLens;
 			newMinLens.reserve(_nChooseK[i - 1]);
