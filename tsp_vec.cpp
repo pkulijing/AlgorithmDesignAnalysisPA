@@ -6,11 +6,10 @@
 #include <cmath>
 #include <cassert>
 #include <climits>
-#include <unordered_map>
 #include <chrono>
 #include <bitset>
 #include <cfloat>
-using std::unordered_map;
+#include <algorithm>
 using std::ifstream;
 using std::cout;
 using std::endl;
@@ -21,6 +20,13 @@ using std::istream;
 using std::bitset;
 using std::min;
 const int N = 25;
+static int power(int a, int n) {
+ 	int res = 1;
+ 	for(int i = 0; i < n; i++) {
+ 		res *= a;
+ 	}
+ 	return res;
+}
 class TSP {
 public:
 	TSP(const vector<float>& x, const vector<float>& y) 
@@ -60,52 +66,38 @@ public:
 		}
 		threshold += _distance[cur][0];
 		cout << threshold << endl;
-		unordered_map<int, vector<float> > minLens;
+		vector<float> minLens(power(2, n - 1) * (n - 1), threshold + 1);
 		bitset<N> bs(0);
 		for(int j = 0; j < n - 1; j++) {
 			bitset<N> bs1 = bs;
 			bs1.set(j);
 			int num1 = bs1.to_ulong();
-			vector<float> t(n - 1, threshold + 1);
-			t[j] = _distance[0][j + 1];
-			minLens[num1] = t;
+			minLens[num1 * (n - 1) + j] = _distance[0][j + 1];
 		}
-		for(int i = 3; i <= n; i++) {
-			unordered_map<int, vector<float> > newMinLens;
-			newMinLens.reserve(_nChooseK[i - 1]);
-			for(auto it = minLens.begin(); it != minLens.end(); it++) {
-				int num = it->first;
-				bitset<N> bs(num);
-				for(int j = 0; j < n - 1; j++){
+		for(int i = 2; i < n; i++) {
+			vector<int> indices = permutations(n - 1, i - 1);
+			for(auto it = indices.begin(); it != indices.end(); it++) {
+				bitset<N> bs(*it);
+				for(int j = 0; j < n - 1; j++) {
 					if(!bs[j]) {
 						bitset<N> bs1 = bs;
-						bs1.set(j);
-						int num1 = bs1.to_ulong();
+						bs1.flip(j);
 						float val = threshold + 1;
 						for(int k = 0; k < n - 1; k++) {
 							if(k == j)
 								continue;
-							val = min(val, it->second[k] + _distance[k + 1][j + 1]);
+							val = min(val, minLens[*it * (n - 1) + k] + _distance[k + 1][j + 1]);
 						}
-						auto itFind = newMinLens.find(num1);
-						if(itFind == newMinLens.end()) {
-							auto itInsert = newMinLens.emplace(num1, vector<float>(n - 1, threshold + 1));
-							itInsert.first->second[j] = val;
-						} else {
-							itFind->second[j] = val;				
-						}	
+						minLens[bs1.to_ulong() * (n - 1) + j] = val;
 					}
 				}
 			}
-			minLens.swap(newMinLens);
-			cout << "i = " << i << ", num of subsets = " << minLens.size() << endl;
+			cout << "i = " << i << ", num of subsets = " << indices.size() << endl;
 		}
-		assert(minLens.size() == 1);
 		_minLen = threshold + 1;
-		auto it = minLens.begin();
+		size_t sz = minLens.size();
 		for(int k = 0; k < n - 1; k++) {
-			_minLen = min(_minLen, it->second[k] + _distance[k + 1][0]);
-			cout << it->second[k] << endl;
+			_minLen = min(_minLen, minLens[sz - (n - 1) + k] + _distance[k + 1][0]);
 		}
 	}
 	float result() const { return _minLen; }
@@ -128,6 +120,20 @@ private:
 				res[i] = res[i - 1] * (n + 1 - i) / i;
 			}
 		}
+		return res;
+	}
+	static vector<int> permutations(int n, int k) {
+		vector<int> res;
+		vector<bool> bv(n - k, 0);
+		bv.resize(n, 1);
+		do {
+			bitset<32> bs(0);
+			for(int i = 0; i < n; i++) {
+				if(bv[i])
+					bs.set(n - 1 - i);
+			}
+			res.push_back(bs.to_ulong());
+		} while (next_permutation(bv.begin(), bv.end()));
 		return res;
 	}
 	vector<int> _nChooseK;
