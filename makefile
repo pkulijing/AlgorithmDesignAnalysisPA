@@ -31,11 +31,6 @@ apsp: apsp.cpp
 	$(CC) $(OPT) -o $(BINDIR)/apsp apsp.cpp
 tsp: tsp.cpp
 	$(CC) $(OPT) -o $(BINDIR)/tsp tsp.cpp
-tsp_vec: tsp_vec.cpp
-	$(CC) $(OPT) -o $(BINDIR)/tsp_vec tsp_vec.cpp
-tsp_vec_o2: tsp_vec.cpp
-	$(CC) -O2 $(OPT) -o $(BINDIR)/tsp_vec_o2 tsp_vec.cpp
-
 
 
 
