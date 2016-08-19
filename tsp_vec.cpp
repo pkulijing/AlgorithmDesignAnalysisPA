@@ -74,7 +74,7 @@ public:
 			int num1 = bs1.to_ulong();
 			minLens[num1 * (n - 1) + j] = _distance[0][j + 1];
 		}
-		for(int i = 2; i < n; i++) {
+		for(int i = 3; i < n; i++) {
 			vector<int> indices = permutations(n - 1, i - 1);
 			for(auto it = indices.begin(); it != indices.end(); it++) {
 				bitset<N> bs(*it);
