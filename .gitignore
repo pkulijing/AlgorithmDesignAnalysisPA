@@ -7,5 +7,11 @@ clustering.test
 knapsack_big.test
 apsp20000.test
 apsp1000*.test
+2sat1.test
+2sat2.test
+2sat3.test
+2sat4.test
+2sat5.test
+2sat6.test
 
 
